@@ -1,0 +1,33 @@
+{
+    "name": "Default",
+    "maps": [
+        {
+            "name": "Camera",
+            "id": "f63d02d5-bc8c-42be-98d6-8aa0c1a442f9",
+            "actions": [
+                {
+                    "name": "Zoom",
+                    "type": "PassThrough",
+                    "id": "9b4cbbea-705a-4dc9-9ad3-fb99f1260af3",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": ""
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "5f161517-cce2-495a-a830-cace02c3d151",
+                    "path": "<Mouse>/scroll/y",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Zoom",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
