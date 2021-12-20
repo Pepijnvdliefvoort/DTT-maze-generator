@@ -26,7 +26,7 @@ public class RecursiveBacktracking : Algorithm {
 		while (stack.Count > 0) {
 			GameObject marked = Instantiate(mark, transform);
 
-			Vector3 position = new Vector3(-width / 2 + current.position.X, 0.1f, -height / 2 + current.position.Y);
+			Vector3 position = new Vector3(-width / 2 + current.Position.X, 0.1f, -height / 2 + current.Position.Y);
 			marked.transform.position = position;
 
 			yield return new WaitForSeconds(delay);
@@ -39,7 +39,7 @@ public class RecursiveBacktracking : Algorithm {
 
 				GameObject tobeMarked = Instantiate(tobeMark, transform);
 
-				Vector3 markedPosition = new Vector3(-width / 2 + next.position.X, 0, -height / 2 + next.position.Y);
+				Vector3 markedPosition = new Vector3(-width / 2 + next.Position.X, 0, -height / 2 + next.Position.Y);
 				tobeMarked.transform.position = markedPosition;
 				yield return new WaitForSeconds(delay);
 
@@ -65,8 +65,8 @@ public class RecursiveBacktracking : Algorithm {
 	/// <param name="current">The current <see cref="Cell"/></param>
 	/// <param name="next">The next <see cref="Cell"/> that will be used to generate from</param>
 	private void RemoveWalls(Cell current, Cell next) {
-		int x = current.position.X - next.position.X;
-		int y = current.position.Y - next.position.Y;
+		int x = current.Position.X - next.Position.X;
+		int y = current.Position.Y - next.Position.Y;
 
 		// Left
 		if (x == -1) {
@@ -103,23 +103,23 @@ public class RecursiveBacktracking : Algorithm {
 		List<Cell> neighbors = new List<Cell>();
 
 		Cell top = null;
-		if (!(current.position.Y - 1 < 0)) {
-			top = maze[current.position.X, current.position.Y - 1];
+		if (!(current.Position.Y - 1 < 0)) {
+			top = maze[current.Position.X, current.Position.Y - 1];
 		}
 
 		Cell left = null;
-		if (!(current.position.X + 1 >= width)) {
-			left = maze[current.position.X + 1, current.position.Y];
+		if (!(current.Position.X + 1 >= width)) {
+			left = maze[current.Position.X + 1, current.Position.Y];
 		}
 
 		Cell bottom = null;
-		if (!(current.position.Y + 1 >= height)) {
-			bottom = maze[current.position.X, current.position.Y + 1];
+		if (!(current.Position.Y + 1 >= height)) {
+			bottom = maze[current.Position.X, current.Position.Y + 1];
 		}
 
 		Cell right = null;
-		if (!(current.position.X - 1 < 0)) {
-			right = maze[current.position.X - 1, current.position.Y];
+		if (!(current.Position.X - 1 < 0)) {
+			right = maze[current.Position.X - 1, current.Position.Y];
 		}
 
 		// Top

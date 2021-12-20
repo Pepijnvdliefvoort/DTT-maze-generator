@@ -4,14 +4,14 @@ using UnityEngine;
 using static Algorithm;
 
 public class Cell {
-	public Position position;
+	public Position Position;
 	public GameObject[] Walls;
 	public bool Visited { get; set; }
 
 	public Cell(int x, int y) {
 		Visited = false;
-		position.X = x;
-		position.Y = y;
+		Position.X = x;
+		Position.Y = y;
 
 		// Top left bottom right
 		Walls = new GameObject[4];
