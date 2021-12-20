@@ -84,12 +84,17 @@ public abstract class Algorithm : MonoBehaviour {
 				for (int i = 0; i < maze[x, y].Walls.Length; i++) {
 					Destroy(maze[x, y].Walls[i]);
 				}
-}
+			}
+		}
+
+		GameObject[] marks = GameObject.FindGameObjectsWithTag("Respawn");
+		foreach (GameObject mark in marks) {
+			Destroy(mark);
 		}
 	}
 
 	public struct Position {
-	public int X;
-	public int Y;
-}
+		public int X;
+		public int Y;
+	}
 }
