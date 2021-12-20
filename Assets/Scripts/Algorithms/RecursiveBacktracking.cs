@@ -1,150 +1,210 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
-using UnityEngine.Events;
+using Random = UnityEngine.Random;
 
-public class RecursiveBacktracking : MazeAlgorithm {
-    [Header("Algorithm settings")]
-    [SerializeField]
-    [Tooltip("The amount of iteration steps the algorithm runs every second. Increasing this number will result in a lower frame rate. NOTE: This algorithm will always do atleast 1 iteration every frame.")]
-    private int iterationsPerSeconds = 5000;
-    [SerializeField]
-    private GameObject stepIndicator;
+public class RecursiveBacktracking : Algorithm {
+	[SerializeField]
+	private GameObject mark = null;
 
-    [Header("Cell settings")]
-    [SerializeField]
-    [Tooltip("This indicates the zero-based position of the cell to start the algorithm from.")]
-    private Vector2Int initialCell;
-    [SerializeField]
-    [Tooltip("This indicates the zero-based y-position of the cell to start the maze at.")]
-    private int startCellPosition;
-    [SerializeField]
-    [Tooltip("This indicates the zero-based y-position of the cell to end the maze at.")]
-    private int endCellPosition;
+	[SerializeField]
+	private GameObject tobeMark = null;
 
-    [Header("Prefab settings")]
-    [SerializeField]
-    private GameObject cellPrefab;
-    [SerializeField]
-    private GameObject wallPrefab;
+	public override IEnumerator Solve(Cell[,] maze, int width, int height) {
+		Stack<Cell> stack = new Stack<Cell>();
 
-    private MazeCell[,] cells;
-    private MazeCell currentCell;
-    private Stack<MazeCell> cellStack;
+		Cell current = maze[0, height - 1];
+		current.Visited = true;
+		stack.Push(current);
 
-    public override void OnInitialize() {
-        // Initializes the 2D array with the size of the maze
-        cells = new MazeCell[MazeGenerator.Bounds.x, MazeGenerator.Bounds.y];
-        // Initializes a new stack used by the algorithm
-        cellStack = new Stack<MazeCell>();
+		while (stack.Count > 0) {
+			GameObject marked = Instantiate(mark, transform);
 
-        // Two-dimensional loop to initialize and draw all individual cells in the maze
-        for (int y = 0; y < cells.GetLength(1); y++) {
-            for (int x = 0; x < cells.GetLength(0); x++) {
-                Transform cellTransform = Instantiate(cellPrefab, transform).transform;
-                cellTransform.name += $" ({x + 1}, {y + 1})";
+			Vector3 position = new Vector3(-width / 2 + current.position.X, 0.1f, -height / 2 + current.position.Y);
+			marked.transform.position = position;
 
-                cellTransform.localPosition = MazeGenerator.GetLocalCellPosition(x, y);
+			yield return new WaitForSeconds(delay);
 
-                MazeCell cell = cellTransform.GetComponent<MazeCell>();
-                cell.Initialize(MazeGenerator, new Vector2Int(x, y), wallPrefab);
-                cells[x, y] = cell;
-            }
-        }
+			Cell next = GetUnvisitedNeighbor(current, maze, width, height);
+			if (next != null) {
+				RemoveWalls(current, next);
 
-        // Set an initial cell and mark it as visited
-        MazeCell initialCell = cells[this.initialCell.x, this.initialCell.y];
-        initialCell.Visited = true;
-        cellStack.Push(initialCell);
+				GameObject tobeMarked = Instantiate(tobeMark, transform);
 
-        // Remove the walls of the start and end of the maze
-        Destroy(cells[0, startCellPosition][Direction.LEFT]);
-        Destroy(cells[cells.GetLength(0) - 1, endCellPosition][Direction.RIGHT]);
+				Vector3 markedPosition = new Vector3(-width / 2 + next.position.X, 0, -height / 2 + next.position.Y);
+				tobeMarked.transform.position = markedPosition;
+				yield return new WaitForSeconds(delay);
 
-        // Create an indicator object on the initial cell to track the algorithm while it is running
-        stepIndicator.transform.position = transform.position + MazeGenerator.GetLocalCellPosition(initialCell.Position.x, initialCell.Position.y);
-        stepIndicator.SetActive(true);
-        stepIndicator.transform.localScale = Vector3.one * MazeGenerator.CellSize;
-    }
+				// Push the current cell to the stack
+				stack.Push(current);
 
-    public override void OnRun() {
-        // Calculate the amount of iterations this frame has to run
-        int iterations = (int) Mathf.Max(iterationsPerSeconds * Time.deltaTime, 1);
+				next.Visited = true;
+				current = next;
+			}
+			else if (stack.Count > 0) {
+				current = stack.Pop();
+			}
+		}
 
-        // Loop through the amount of earlier caluclated iterations
-        for (int iteration = 0; iteration < iterations; iteration++) {
-            // Check whether the stack is empty, which indicates the maze generation is completed
-            if(cellStack.Count == 0) {
-                Stop();
-                break;
-            }
+		CreateExitAndEntrance(maze, width, height);
+	}
 
-            // Retrieve all direction enum values as an array in a random order
-            Direction[] directions = System.Enum.GetValues(typeof(Direction)).Cast<Direction>().OrderBy(x => Random.value).ToArray();
+	private void RemoveWalls(Cell current, Cell next) {
+		int x = current.position.X - next.position.X;
+		int y = current.position.Y - next.position.Y;
 
-            // Retrieve the current cell in the algorithm from the stack
-            currentCell = cellStack.Pop();
-            // Set the new position of the indicator to track the algorithm
-            stepIndicator.transform.position = transform.position + MazeGenerator.GetLocalCellPosition(currentCell.Position.x, currentCell.Position.y);
+		// Left
+		if (x == -1) {
+			Destroy(current.Walls[3]);
+			Destroy(next.Walls[1]);
+		}
+		// Right
+		else if (x == 1) {
+			Destroy(current.Walls[1]);
+			Destroy(next.Walls[3]);
+		}
 
-            Vector2Int currentCellPosition = currentCell.Position;
+		// Top
+		if (y == -1) {
+			Destroy(current.Walls[0]);
+			Destroy(next.Walls[2]);
+		}
+		// Bottom
+		else if (y == 1) {
+			Destroy(current.Walls[2]);
+			Destroy(next.Walls[0]);
+		}
+	}
 
-            // Check all directions if the adjecant cell has been visited yet to continue the algorithm
-            MazeCell visitingCell = null;
-            Direction? randomDirection = null;
-            foreach(Direction directionIteration in directions) {
-                Vector2Int randomDirectionVector = directionIteration.ToVector();
+	private Cell GetUnvisitedNeighbor(Cell current, Cell[,] maze, int width, int height) {
+		List<Cell> neighbors = new List<Cell>();
 
-                // Check if the adjecant cell of the given direction is not out of bounds
-                int cellX = currentCellPosition.x + randomDirectionVector.x, cellY = currentCellPosition.y + randomDirectionVector.y;
-                if (cellX >= MazeGenerator.Bounds.x || cellX < 0 || cellY >= MazeGenerator.Bounds.y || cellY < 0) {
-                    continue;
-                }
+		Cell top;
+		if (current.position.Y - 1 < 0) {
+			top = null;
+		}
+		else {
+			top = maze[current.position.X, current.position.Y - 1];
+		}
 
-                MazeCell randomVisitingCell = cells[cellX, cellY];
+		Cell left;
+		if (current.position.X + 1 >= width) {
+			left = null;
+		}
+		else {
+			left = maze[current.position.X + 1, current.position.Y];
+		}
 
-                // Check whether the adjecant cell has been visited yet
-                if(randomVisitingCell.Visited) {
-                    continue;
-                }
+		Cell bottom;
+		if (current.position.Y + 1 >= height) {
+			bottom = null;
+		}
+		else {
+			bottom = maze[current.position.X, current.position.Y + 1];
+		}
 
-                randomDirection = directionIteration;
-                visitingCell = randomVisitingCell;
-            }
+		Cell right;
+		if (current.position.X - 1 < 0) {
+			right = null;
+		}
+		else {
+			right = maze[current.position.X - 1, current.position.Y];
+		}
 
-            // Check if a valid direction is present
-            if(!randomDirection.HasValue) {
-                continue;
-            }
+		// Top
+		if (top != null && !top.Visited) {
+			neighbors.Add(top);
+		}
 
-            // Check if a valid adjecant cell is present
-            if (visitingCell == null) {
-                continue;
-            }
+		// Left
+		if (left != null && !left.Visited) {
+			neighbors.Add(left);
+		}
 
-            // Remove the walls between the current cell and the adjecant cell
-            Destroy(currentCell[randomDirection.Value]);
-            Destroy(visitingCell[randomDirection.Value.GetOpposite()]);
+		// Bottom
+		if (bottom != null && !bottom.Visited) {
+			neighbors.Add(bottom);
+		}
 
-            // Mark the adjecant cell as visited
-            visitingCell.Visited = true;
+		// Right
+		if (right != null && !right.Visited) {
+			neighbors.Add(right);
+		}
 
-            // Update the stack to push both the current cell and the adjecant cell to the stack
-            cellStack.Push(currentCell);
-            cellStack.Push(visitingCell);
-        }
-    }
+		if (neighbors.Count > 0) {
+			Cell neighbor = neighbors[Random.Range(0, neighbors.Count)];
+			return neighbor;
+		}
 
-    public override void OnStop() {
-        // Disable the indicator to track the algorithm
-        stepIndicator.SetActive(false);
-    }
+		return null;
+	}
 
-    public override void ClearMaze() {
-        // Remove all cells in the maze
-        foreach(MazeCell cell in cells) {
-            Destroy(cell.gameObject);
-        }
-    }
+	//private CellWalls GetOppositeWall(CellWalls wall) {
+	//	switch (wall) {
+	//		case CellWalls.RIGHT: return CellWalls.LEFT;
+	//		case CellWalls.LEFT: return CellWalls.RIGHT;
+	//		case CellWalls.UP: return CellWalls.DOWN;
+	//		case CellWalls.DOWN: return CellWalls.UP;
+	//		default: return CellWalls.LEFT;
+	//	}
+	//}
+
+	//private List<Neighbour> GetUnvisitedNeighbours(Position position, CellWalls[,] maze, int width, int height) {
+	//	List<Neighbour> list = new List<Neighbour>();
+
+	//	// Left
+	//	if (position.X > 0) {
+	//		if (!maze[position.X - 1, position.Y].HasFlag(CellWalls.VISITED)) {
+	//			list.Add(new Neighbour {
+	//				Position = new Position {
+	//					X = position.X - 1,
+	//					Y = position.Y,
+	//				},
+	//				SharedWall = CellWalls.LEFT
+	//			});
+	//		}
+	//	}
+
+	//	// Down
+	//	if (position.Y > 0) {
+	//		if (!maze[position.X, position.Y - 1].HasFlag(CellWalls.VISITED)) {
+	//			list.Add(new Neighbour {
+	//				Position = new Position {
+	//					X = position.X,
+	//					Y = position.Y - 1,
+	//				},
+	//				SharedWall = CellWalls.DOWN
+	//			});
+	//		}
+	//	}
+
+	//	// Up
+	//	if (position.Y < height - 1) {
+	//		if (!maze[position.X, position.Y + 1].HasFlag(CellWalls.VISITED)) {
+	//			list.Add(new Neighbour {
+	//				Position = new Position {
+	//					X = position.X,
+	//					Y = position.Y + 1,
+	//				},
+	//				SharedWall = CellWalls.UP
+	//			});
+	//		}
+	//	}
+
+	//	// Right
+	//	if (position.X < width - 1) {
+	//		if (!maze[position.X + 1, position.Y].HasFlag(CellWalls.VISITED)) {
+	//			list.Add(new Neighbour {
+	//				Position = new Position {
+	//					X = position.X + 1,
+	//					Y = position.Y,
+	//				},
+	//				SharedWall = CellWalls.RIGHT
+	//			});
+	//		}
+	//	}
+
+	//	return list;
+	//}
 }
