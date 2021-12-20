@@ -13,7 +13,7 @@ public abstract class Algorithm : MonoBehaviour {
 	/// <param name="maze">A two-dimensional array of cells that is used to carve out a maze</param>
 	/// <param name="width">Width of the maze</param>
 	/// <param name="height">Height of the maze</param>
-	/// <returns>IEnumerator for the coroutine</returns>
+	/// <returns><see cref="IEnumerator"/> for the coroutine</returns>
 	public abstract IEnumerator Solve(Cell[,] maze, int width, int height);
 
 	/// <summary>
@@ -70,11 +70,22 @@ public abstract class Algorithm : MonoBehaviour {
 		return maze;
 	}
 
+	/// <summary>
+	/// Create an entrance in the top left corner, and entrance in the bottom right corner in any given maze
+	/// </summary>
+	/// <param name="maze">A two-dimensional array of <see cref="Cell"/></param>
+	/// <param name="width">Width of the maze</param>
+	/// <param name="height">Height of the maze</param>
 	protected void CreateExitAndEntrance(Cell[,] maze, int width, int height) {
 		Destroy(maze[0, height - 1].Walls[1]);
 		Destroy(maze[width - 1, 0].Walls[3]);
 	}
 
+
+	/// <summary>
+	/// Remove all the walls and marks that are placed down if there are any
+	/// </summary>
+	/// <param name="maze">A two-dimensional array of <see cref="Cell"/></param>
 	public void ClearMaze(Cell[,] maze) {
 		// Loop through entire grid
 		for (int x = 0; x < maze.GetLength(0); x++) {

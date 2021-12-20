@@ -11,13 +11,18 @@ public class RecursiveBacktracking : Algorithm {
 	[SerializeField]
 	private GameObject tobeMark = null;
 
+	/// <inheritdoc />
 	public override IEnumerator Solve(Cell[,] maze, int width, int height) {
 		Stack<Cell> stack = new Stack<Cell>();
 
+		// 1. Given a current cell as a parameter
 		Cell current = maze[0, height - 1];
+
+		// 2. Mark the current cell as visited
 		current.Visited = true;
 		stack.Push(current);
 
+		// 3. While the current cell has any unvisited neighbour cells
 		while (stack.Count > 0) {
 			GameObject marked = Instantiate(mark, transform);
 
@@ -26,8 +31,10 @@ public class RecursiveBacktracking : Algorithm {
 
 			yield return new WaitForSeconds(delay);
 
+			// 1. Choose one of the unvisited neighbours
 			Cell next = GetUnvisitedNeighbor(current, maze, width, height);
 			if (next != null) {
+				// 2. Remove the wall between the current cell and the chosen cell
 				RemoveWalls(current, next);
 
 				GameObject tobeMarked = Instantiate(tobeMark, transform);
@@ -42,14 +49,21 @@ public class RecursiveBacktracking : Algorithm {
 				next.Visited = true;
 				current = next;
 			}
+			// 3. Invoke the routine recursively for a chosen cell
 			else if (stack.Count > 0) {
 				current = stack.Pop();
 			}
 		}
 
+		// Create entrance and exit for the maze after it is done generating
 		CreateExitAndEntrance(maze, width, height);
 	}
 
+	/// <summary>
+	/// Remove walls between two cells
+	/// </summary>
+	/// <param name="current">The current <see cref="Cell"/></param>
+	/// <param name="next">The next <see cref="Cell"/> that will be used to generate from</param>
 	private void RemoveWalls(Cell current, Cell next) {
 		int x = current.position.X - next.position.X;
 		int y = current.position.Y - next.position.Y;
@@ -77,38 +91,34 @@ public class RecursiveBacktracking : Algorithm {
 		}
 	}
 
+	/// <summary>
+	/// Get a single random unvisited neighbor
+	/// </summary>
+	/// <param name="current">The current <see cref="Cell"/></param>
+	/// <param name="maze">A two-dimensional array of <see cref="Cell"/> to check for neighbors</param>
+	/// <param name="width">Width of the maze</param>
+	/// <param name="height">Height of the maze</param>
+	/// <returns>A random single <see cref="Cell"/> neighbor</returns>
 	private Cell GetUnvisitedNeighbor(Cell current, Cell[,] maze, int width, int height) {
 		List<Cell> neighbors = new List<Cell>();
 
-		Cell top;
-		if (current.position.Y - 1 < 0) {
-			top = null;
-		}
-		else {
+		Cell top = null;
+		if (!(current.position.Y - 1 < 0)) {
 			top = maze[current.position.X, current.position.Y - 1];
 		}
 
-		Cell left;
-		if (current.position.X + 1 >= width) {
-			left = null;
-		}
-		else {
+		Cell left = null;
+		if (!(current.position.X + 1 >= width)) {
 			left = maze[current.position.X + 1, current.position.Y];
 		}
 
-		Cell bottom;
-		if (current.position.Y + 1 >= height) {
-			bottom = null;
-		}
-		else {
+		Cell bottom = null;
+		if (!(current.position.Y + 1 >= height)) {
 			bottom = maze[current.position.X, current.position.Y + 1];
 		}
 
-		Cell right;
-		if (current.position.X - 1 < 0) {
-			right = null;
-		}
-		else {
+		Cell right = null;
+		if (!(current.position.X - 1 < 0)) {
 			right = maze[current.position.X - 1, current.position.Y];
 		}
 
@@ -139,72 +149,4 @@ public class RecursiveBacktracking : Algorithm {
 
 		return null;
 	}
-
-	//private CellWalls GetOppositeWall(CellWalls wall) {
-	//	switch (wall) {
-	//		case CellWalls.RIGHT: return CellWalls.LEFT;
-	//		case CellWalls.LEFT: return CellWalls.RIGHT;
-	//		case CellWalls.UP: return CellWalls.DOWN;
-	//		case CellWalls.DOWN: return CellWalls.UP;
-	//		default: return CellWalls.LEFT;
-	//	}
-	//}
-
-	//private List<Neighbour> GetUnvisitedNeighbours(Position position, CellWalls[,] maze, int width, int height) {
-	//	List<Neighbour> list = new List<Neighbour>();
-
-	//	// Left
-	//	if (position.X > 0) {
-	//		if (!maze[position.X - 1, position.Y].HasFlag(CellWalls.VISITED)) {
-	//			list.Add(new Neighbour {
-	//				Position = new Position {
-	//					X = position.X - 1,
-	//					Y = position.Y,
-	//				},
-	//				SharedWall = CellWalls.LEFT
-	//			});
-	//		}
-	//	}
-
-	//	// Down
-	//	if (position.Y > 0) {
-	//		if (!maze[position.X, position.Y - 1].HasFlag(CellWalls.VISITED)) {
-	//			list.Add(new Neighbour {
-	//				Position = new Position {
-	//					X = position.X,
-	//					Y = position.Y - 1,
-	//				},
-	//				SharedWall = CellWalls.DOWN
-	//			});
-	//		}
-	//	}
-
-	//	// Up
-	//	if (position.Y < height - 1) {
-	//		if (!maze[position.X, position.Y + 1].HasFlag(CellWalls.VISITED)) {
-	//			list.Add(new Neighbour {
-	//				Position = new Position {
-	//					X = position.X,
-	//					Y = position.Y + 1,
-	//				},
-	//				SharedWall = CellWalls.UP
-	//			});
-	//		}
-	//	}
-
-	//	// Right
-	//	if (position.X < width - 1) {
-	//		if (!maze[position.X + 1, position.Y].HasFlag(CellWalls.VISITED)) {
-	//			list.Add(new Neighbour {
-	//				Position = new Position {
-	//					X = position.X + 1,
-	//					Y = position.Y,
-	//				},
-	//				SharedWall = CellWalls.RIGHT
-	//			});
-	//		}
-	//	}
-
-	//	return list;
-	//}
 }

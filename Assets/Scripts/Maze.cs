@@ -47,9 +47,12 @@ public class Maze : MonoBehaviour {
 	}
 
 	public void SolveMaze() {
-		// Call abstract method which runs the solve method
+		// Clear maze
 		algorithm.ClearMaze(maze);
+		// Call abstract method which runs the solve method
 		maze = algorithm.CreateEmptyMaze(width, height, size, wallPrefab);
+
+		// Start solving maze independant of other code
 		StartCoroutine(algorithm.Solve(maze, width, height));
 	}
 }
